@@ -38,10 +38,10 @@ func main() {
 	}
 	defer session.Close()
 
-	// GAME disc chat channel id: 844133446438748171
-	msgs, err := session.ChannelMessages("844133446438748171", 100, "", "", "")
+	CHAT_CHANNEL_ID := os.Getenv("GAME_DISC_CHAT_ID")
+	msgs, err := session.ChannelMessages(CHAT_CHANNEL_ID, 100, "", "", "")
 	if err != nil {
-		log.Fatal("Discord message retrieval failure", err)
+		log.Fatal("Discord message retrieval failure: ", err)
 	}
 
 	dict := map[string]int{}
