@@ -39,45 +39,53 @@ func main() {
 	defer session.Close()
 
 	CHAT_CHANNEL_ID := os.Getenv("GAME_DISC_CHAT_ID")
-	msgs, err := session.ChannelMessages(CHAT_CHANNEL_ID, 100, "", "", "")
-	if err != nil {
-		log.Fatal("Discord message retrieval failure: ", err)
-	}
-
 	dict := map[string]int{}
+	oldest_id := ""
 	corrupted := 0
 
-	for _, msg := range msgs {
-		content, err := msg.ContentWithMoreMentionsReplaced(session)
+	for i := 0; i < 20; i++ {
+		msgs, err := session.ChannelMessages(CHAT_CHANNEL_ID, 100, oldest_id, "", "")
 		if err != nil {
-			corrupted++
-			continue
+			log.Fatal("Discord message retrieval failure: ", err)
 		}
 
-		//remove all non-alphanumeric characters
-		//convert everything to lowercase
-		content = strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9\t ]`).ReplaceAllString(content, ""))
+		num_msgs := len(msgs)
 
-		//tokenize each message into words
-		tokens := strings.Fields(content)
-
-		for _, word := range tokens {
-			count := dict[word]
-			if count == 0 {
-				dict[word] = 1
+		for ind, msg := range msgs {
+			content, err := msg.ContentWithMoreMentionsReplaced(session)
+			if err != nil {
+				corrupted++
 				continue
 			}
-			dict[word]++
-		}
-	}
 
-	fmt.Print(dict)
+			if ind == num_msgs-1 {
+				oldest_id = msg.ID
+			}
+
+			//remove all non-alphanumeric characters
+			//convert everything to lowercase
+			content = strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9\t ]`).ReplaceAllString(content, ""))
+
+			//tokenize each message into words
+			tokens := strings.Fields(content)
+
+			for _, word := range tokens {
+				count := dict[word]
+				if count == 0 {
+					dict[word] = 1
+					continue
+				}
+				dict[word]++
+			}
+		}
+		// fmt.Print(dict)
+	}
 
 	w_cloud := wordclouds.NewWordcloud(
 		dict,
 		wordclouds.FontFile("fonts/MontserratBlack.ttf"),
-		wordclouds.Height(2048),
-		wordclouds.Width(2048),
+		wordclouds.Height(4096),
+		wordclouds.Width(4096),
 		wordclouds.Colors([]color.Color{
 			color.RGBA{0xFF, 0x00, 0x00, 0xFF}, // Red
 			color.RGBA{0x00, 0xFF, 0x00, 0xFF}, // Green
